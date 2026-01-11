@@ -97,7 +97,7 @@ The Wazuh Manager includes wazuh-remoted, analysisd, the alert generator, and Fi
 
 ---
 
-## 7. Security Monitoring & Alerts
+## 7. TEST Alert Monitoring:
 
 ### Test Scenario: Successfull root access
 
@@ -120,7 +120,12 @@ ssh nahim@vpsIP
 - Data Source User
 - Data Destination User
 
-![My login Status](/screenshots/ssh-login-attempt.png)
+**Alert Decisions**  
+false positive as Admin/owner can trigger this event
+
+![My login Status](/screenshots/ssh-login-by-me.png)
+
+---
 
 ### Test Scenario: Failed SSH Login
 
@@ -143,13 +148,113 @@ ssh root@vpsIP
 - Data Source User
 - Data Destination User
 
-![My login Status](/screenshots/ssh-login-attempt.png)
+**Alert Decisions**  
+True Positive; As the attacker failed to login multiple time
+
+![Tested Failed SSH](/screenshots/ssh-login-attempt.png)
 
 ---
 
-## 8. Logs & Analysis
+### Test Scenario: Web-Directory Brute Force
+
+**Steps:**
+
+```bash
+ffuf url/FUZZ -w /usr/local/share/wordlist/smallDir.txt
+```
+
+**Result:**
+
+- Wazuh detects multiple GET request from same IP Source
+- Alert generated with severity level
+
+**Alert Information:**
+
+- Timestamp
+- Protocol
+- Path
+- Attempts
+- Attacker IP
+- Attack Description
+- Log Location
+- Attacker Location
+
+**Alert Decisions**  
+True Positive; As the attacker perform Directory BruteForcing
+
+![Tested Directory Brute Force](/screenshots/testDirBuster.png)
+
+---
+
+## 8.Real-Time Attack Monitoring:
+
+### Attack Scenario: SSH Brute Force
+
+- Attack Type: Credential Access
+- Target: SSH Service
+- Detection Tool: Wazuh
+
+**Observed Behavior**
+
+- Multiple failed login attempts
+- Same source IP
+- Different usernames
+
+**Detection Details**
+
+- Rule Level: 10
+- MITRE ATT&CK: T1110
+- Source IP: `45.135.232.92`, `193.46.255.217`, `193.46.255.159`, `193.46.255.7`, `80.94.93.233`, `45.135.232.92`, `193.46.255.244`, `80.94.93.119`, `193.46.255.7`
+
+![Real Time SSH Brute Force](/screenshots/realSSHBruteForece.png)
+
+**Outcome**
+
+- Attack successfully detected
+- Alerts visible in Wazuh Dashboard
+
+**Decision**  
+True Positive; As the attacker tried multiple times which denoted as Critical Threat Level 10-SSH BruteForce
+
+---
+
+### Attack Scenario: Web Attack
+
+- Attack Type: Login Bypass, Parameter Query, Enumeration
+- Target: Vulnerable Docker Web Service (Flask)
+- Detection Tool: Wazuh
+
+**Observed Behavior**
+
+- Login attempts
+- Parameter Exploitations
+- Directory Enumerations
+
+**Detection Details**
+
+- Suspecious Geo Locations
+- Suspecious Parameter
+- No of Attempts
+- Source IP: `204.96.203.18`, `130.12.180.18`, `5.187.35.158`, `91.224.92.14` and SO on...
+
+![Real Time SSH Brute Force](/screenshots/realWeb8tarik.png)
+
+**Outcome**
+
+- Attack successfully detected
+- Alerts visible in Wazuh Dashboard
+
+**Decision**  
+True Positive; As the attack try to grab the Server Details and perform Malicious Parameterized Query
+
+---
+
+## 9. Logs & Analysis
 
 - Agent logs: `/var/ossec/logs/ossec.log`
+- Apache logs: `/var/log/apache2/access.log`, `/var/log/apache2/error.log`
+- My Vuln Lab Logs: `/var/log/vulab1/flask/access.log`
+- System Logs: `/var/log/auth.log`
 - Manager processes incoming logs
 - Indexer stores searchable data
 
@@ -157,7 +262,7 @@ This demonstrates full **log → analysis → alert** pipeline.
 
 ---
 
-## 9. Challenges Faced & Solutions
+## 10. Challenges Faced & Solutions
 
 | Challenge            | Solution                             |
 | -------------------- | ------------------------------------ |
@@ -165,32 +270,41 @@ This demonstrates full **log → analysis → alert** pipeline.
 | Agent not connecting | Version & key mismatch fix           |
 | Indexer issues       | Clean reinstall & correct cert setup |
 | Network confusion    | IP tracing and routing analysis      |
+| Custom Log Format    | Create custom decode formater        |
+| My Lab Custom Rules  | Write custom rules for my Vuln Lab   |
 
 ---
 
-## 10. Key Learning Outcomes
+## 11. Key Learning Outcomes
 
 - Understanding SIEM architecture
 - Agent–manager communication
 - Real-world networking challenges
 - Log-based threat detection
 - Troubleshooting complex Linux services
-
----
-
-## 11. Future Improvements
-
-- Add multiple agents
-- Enable File Integrity Monitoring (FIM)
-- Add Sysmon / Windows agent
-- Integrate email or Slack alerts
-- Simulate brute-force or malware scenarios
+- Build Custom Rules, Log Format
+- Build My own Vulnerable Lab and Monitoring them perfectly
+- Solutions perfectly Detectes Real Time Threats in my VPS
 
 ---
 
 ## 12. Conclusion
 
-This Mini SOC Lab demonstrates practical SOC skills using open-source tools. It reflects real-world scenarios such as NAT traversal, centralized monitoring, and incident detection.
+This Mini SOC Lab demonstrates practical SOC skills using open-source tools. It reflects real-world scenarios such as NAT traversal, centralized monitoring, incident detection, VPS real-time monitoring, custom log formats, and custom alert rules.
+
+This mini lab assembles real-life solutions to a significant extent. Due to low computer specifications, I faced several challenges, including:
+
+- Slow system response
+- Frequent crashes
+- Pipeline crashes
+  Despite these difficulties, I successfully overcame the issues. Below is the complete Mini SOC Lab project.
+
+**Prove**  
+The Agent and Manager communicate in real time. Initially, the Agent is disconnected. The VPS then starts the Agent, after which the Agent comes back online and functions correctly.
+
+| Agent Disconnected                      | Start Agent from VPS                    | Agent Online                      | Agent Working                      |
+| --------------------------------------- | --------------------------------------- | --------------------------------- | ---------------------------------- |
+| ![](screenshots/Agent-Disconnected.png) | ![](screenshots/Start_agentfromVPS.png) | ![](screenshots/Agent_online.png) | ![](screenshots/agent-working.png) |
 
 This project strengthens hands-on cybersecurity and SOC analyst capabilities.
 
